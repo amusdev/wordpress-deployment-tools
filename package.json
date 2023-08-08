@@ -1,0 +1,32 @@
+{
+  "name": "wp-tool",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "bin": {
+    "wp-tool": "bin/app.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.386.0",
+    "archiver": "^5.3.1",
+    "axios": "^1.4.0",
+    "commander": "^11.0.0",
+    "date-fns": "^2.30.0",
+    "extract-zip": "^2.0.1",
+    "inquirer": "^9.2.10",
+    "php-parser": "^3.1.5",
+    "psl": "^1.9.0",
+    "rimraf": "^5.0.1",
+    "tmp": "^0.2.1"
+  },
+  "devDependencies": {
+    "@types/tmp": "^0.2.3"
+  }
+}
