@@ -3,9 +3,11 @@
 import fs from "fs";
 import { Command } from "commander";
 import path from "path";
+import shell from "shelljs";
 import setupBootstrap from "../bootstraps/setup.bootstrap.js";
 import backupBootstrap from "../bootstraps/backup.bootstrap.js";
 import templateBootstrap from "../bootstraps/template.bootstrap.js";
+import MySQLService from "../services/mysql.service.js";
 
 const program = new Command();
 
@@ -22,24 +24,46 @@ program
 
 program
   .command('build')
-  .description('build the website and install themes and plugins')
-  .requiredOption('-t, --template <template>', 'template file on unix system path')
-  .option('-d, --directory <directory>', 'root directory for website', '.')
+  .description('install the webite with themes and plugins into os')
+  .requiredOption('-t, --template <template>', 'unix path of the template file')
+  .option('-d, --dev', 'run as development mode, setup without alter unix user, nginx, MySQL etc.')
+  .option('-h, --host <host>', 'MySQL host')
+  .option('-h, --port <port>', 'MySQL port')
+  .option('-u, --username <username>', 'MySQL admin username')
+  .option('-a, --password <password>', 'MySQL admin password')
+  .requiredOption('-d, --directory <directory>', 'root directory for website', '.')
   .action(async function() {
-    const { template: templateFilePath, directory } = this.opts();
+    const { template: templateFilePath, directory, host, port, username, password, dev } = this.opts();
     if (!fs.existsSync(templateFilePath)) {
       throw new Error(`File not exists in ${templateFilePath}.`);
+    }
+    if (!shell.which("php")) {
+      throw new Error("The host need to install php to make it works.");
+    }
+    if (!dev) {
+      if (process.getuid() !== 0) {
+        throw new Error("The process needs root permission when production mode.");
+      }
+      if ((host === undefined || host === "localhost" || host === "127.0.0.1") && !shell.which("mysqld")) {
+        throw new Error("Using localhost or 127.0.0.1 must be installed MySQL database on host.");
+      }
+    }
+    const mysqlService = new MySQLService(host, port, username, password);
+    if (!await mysqlService.testConnection()) {
+      throw new Error("Failed To Connect MySQL Server.");
     }
     const template = JSON.parse(fs.readFileSync(templateFilePath));
     await setupBootstrap.handler(
       path.isAbsolute(directory) ? directory : path.join(process.cwd(), directory),
-      template
+      template,
+      dev,
+      mysqlService
     );
   });
 
 program
   .command('backup')
-  .description('backup the website')
+  .description('backup database and source code')
   .requiredOption('-u, --username <username>', 'MySQL admin username')
   .requiredOption('-a, --password <password>', 'MySQL admin password')
   .requiredOption('-d, --directory <directory>', 'the root directory of the website to backup')

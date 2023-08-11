@@ -9,7 +9,7 @@ export default {
     }
     const { version } = await inquirer.prompt({ name: "version", message: "version of wordpress?", default: "latest" });
     console.log(JSON.stringify({
-      name: domain,
+      domain,
       version,
       themes: {
         twentytwentythree: "latest",
