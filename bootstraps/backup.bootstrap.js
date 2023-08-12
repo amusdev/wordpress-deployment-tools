@@ -4,30 +4,8 @@ import { spawn } from "child_process";
 import tmp from "tmp";
 import archiver from "archiver";
 import { format } from "date-fns";
-import { Engine } from "php-parser";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-
-function parseWpConfigFile(content) {
-  const engine = new Engine();
-  const { children } = engine.parseCode(content);
-  let database = null, dbHost = "localhost", dbPort = 3306;
-  for (const child of children) {
-    if (child.expression?.what?.name === "define") {
-      const [ name, value ] = child.expression.arguments;
-      if (name.kind === "string" && name.value === "DB_NAME" && value.kind === "string") {
-        database = value.value;
-      }
-      if (name.kind === "string" && name.value === "DB_HOST" && value.kind === "string") {
-        const [ host, port ] = value.value.split(":");
-        dbHost = host ?? "localhost";
-        if (port !== undefined) {
-          dbPort = parseInt(port);
-        }
-      }
-    }
-  }
-  return { database, dbHost, dbPort };
-}
+import wpHelper from "../helpers/wp.helper.js";
 
 async function backupDatabase(host, port, user, pass, database, fileStream) {
   const mysqldump = spawn('mysqldump', [
@@ -51,7 +29,7 @@ async function backupDatabase(host, port, user, pass, database, fileStream) {
 export default {
   handler: async function(rootDir, dbUser, dbPass, s3accessKeyId, s3secretAccessKey) {
     const wpconfig = fs.readFileSync(path.join(rootDir, "wp-config.php"));
-    const { database, dbHost, dbPort } = parseWpConfigFile(wpconfig);
+    const { database, dbHost, dbPort } = wpHelper.parseWpConfig(wpconfig);
     const sqlFile = tmp.fileSync({
       mode: 0o600,
       prefix: 'wp-backup-',

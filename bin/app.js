@@ -4,10 +4,11 @@ import fs from "fs";
 import { Command } from "commander";
 import path from "path";
 import shell from "shelljs";
+import { Sequelize } from "sequelize";
 import setupBootstrap from "../bootstraps/setup.bootstrap.js";
 import backupBootstrap from "../bootstraps/backup.bootstrap.js";
 import templateBootstrap from "../bootstraps/template.bootstrap.js";
-import MySQLService from "../services/mysql.service.js";
+import repairBootstrap from "../bootstraps/repair.bootstrap.js";
 
 const program = new Command();
 
@@ -37,27 +38,60 @@ program
     if (!fs.existsSync(templateFilePath)) {
       throw new Error(`File not exists in ${templateFilePath}.`);
     }
-    if (!shell.which("php")) {
-      throw new Error("The host need to install php to make it works.");
+    if (!shell.which('php')) {
+      throw new Error('The host need to install php to make it works.');
     }
     if (!dev) {
       if (process.getuid() !== 0) {
-        throw new Error("The process needs root permission when production mode.");
+        throw new Error('The process needs root permission when production mode.');
       }
-      if ((host === undefined || host === "localhost" || host === "127.0.0.1") && !shell.which("mysqld")) {
-        throw new Error("Using localhost or 127.0.0.1 must be installed MySQL database on host.");
+      if ((host === undefined || host === 'localhost' || host === '127.0.0.1') && !shell.which('mysqld')) {
+        throw new Error('Using localhost or 127.0.0.1 must be installed MySQL database on host.');
       }
     }
-    const mysqlService = new MySQLService(host, port, username, password);
-    if (!await mysqlService.testConnection()) {
-      throw new Error("Failed To Connect MySQL Server.");
+    const sequelize = new Sequelize({ host, port, username, password });
+    if (!await sequelize.authenticate()) {
+      throw new Error('Failed To Connect MySQL Server.');
     }
+    await sequelize.close();
     const template = JSON.parse(fs.readFileSync(templateFilePath));
     await setupBootstrap.handler(
       path.isAbsolute(directory) ? directory : path.join(process.cwd(), directory),
       template,
       dev,
-      mysqlService
+      { host, port, user: username, password }
+    );
+  });
+
+program
+  .command('repair')
+  .description('repair website (production mode only)')
+  .requiredOption('-t, --domain <domain>', 'wordpress website domain')
+  .option('-h, --host <host>', 'MySQL host')
+  .option('-h, --port <port>', 'MySQL port')
+  .option('-u, --username <username>', 'MySQL admin username')
+  .option('-a, --password <password>', 'MySQL admin password')
+  .requiredOption('-d, --directory <directory>', 'root directory for website', '.')
+  .action(async function() {
+    const { domain, directory, host, port, username, password } = this.opts();
+    if (!shell.which('php')) {
+      throw new Error('The host need to install php to make it works.');
+    }
+    if (process.getuid() !== 0) {
+      throw new Error('The process needs root permission when production mode.');
+    }
+    if ((host === undefined || host === 'localhost' || host === '127.0.0.1') && !shell.which('mysqld')) {
+      throw new Error('Using localhost or 127.0.0.1 must be installed MySQL database on host.');
+    }
+    const sequelize = new Sequelize({ host, port, username, password });
+    if (!await sequelize.authenticate()) {
+      throw new Error('Failed To Connect MySQL Server.');
+    }
+    await sequelize.close();
+    await repairBootstrap.handler(
+      directory,
+      domain,
+      { host, port, user: username, password }
     );
   });
 
