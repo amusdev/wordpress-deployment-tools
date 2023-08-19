@@ -1,7 +1,7 @@
 import extract from "extract-zip";
 
 export default {
-  zip: async function (source, dist) {
+  zip: async function (source: string, dist: string) {
     try {
       await extract(source, { dir: dist });
     } catch (err) {

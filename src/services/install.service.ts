@@ -3,9 +3,10 @@ import path from "node:path";
 import shell from 'shelljs';
 import inquirer from "inquirer";
 import { Sequelize, QueryTypes } from "sequelize";
-import wpHelper from "../helpers/wp.helper.js";
+import wpHelper from "@/helpers/wp.helper.js";
+import { MySQLCredential } from "@/types/common.js";
 
-function random(length, { lower = true, upper = true, numeric = true, symbol = false } = {}) {
+function random(length: number, { lower = true, upper = true, numeric = true, symbol = false } = {}) {
   let mask = '';
   if (lower) mask += 'abcdefghijklmnopqrstuvwxyz';
   if (upper) mask += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -16,23 +17,20 @@ function random(length, { lower = true, upper = true, numeric = true, symbol = f
   return result;
 }
 
-/**
- * 
- * @param {string} wpDir 
- * @param {string} domain 
- * @param {string} nickname 
- * @param {{ host: string, port: number, user: string, password: string }} database 
- */
-async function configSetup(wpDir, domain, nickname, database) {
+async function configSetup(wpDir: string, domain: string, nickname: string, database: MySQLCredential) {
   console.log('Setup OS and MySQL database');
 
-  let { host, port, user, password } = database;
+  let { host, port, username, password } = database;
   let wpConfigDbUser = undefined;
   let wpDb = nickname;
   let wpDbPassword = random(20, { symbol: true });
 
   // check php version for default
-  const [ php ] = shell.exec('php --ini').stdout.match(/([0-9]\.[0-9])/);
+  const matches = shell.exec('php -v').stdout.match(/^PHP ([0-9]\.[0-9])/);
+  if (matches === null) {
+    throw new Error('Cannot find php version using `php -v`');
+  }
+  const [ php ] = matches;
   const fpm = `/etc/php/${php}/fpm`;
   if (!fs.existsSync(fpm) || !fs.lstatSync(fpm).isDirectory()) {
     throw new Error(`PHP fpm path is not a directory at ${fpm}`);
@@ -52,7 +50,7 @@ async function configSetup(wpDir, domain, nickname, database) {
         process.exit(1);
       }
     }
-    wpDb = parsedWpConfig.database;
+    wpDb = parsedWpConfig.database || nickname;
     wpConfigDbUser = parsedWpConfig.dbUser;
   }
   shell.cp(path.join(wpDir, 'wp-config-sample.php'), wpConfig);
@@ -67,7 +65,7 @@ async function configSetup(wpDir, domain, nickname, database) {
   // setting wordpress config
   shell.sed("-i", "put your unique phrase here", random(32, { symbol: true }), wpConfig);
   shell.sed("-i", "database_name_here", wpDb, wpConfig);
-  shell.sed("-i", "username_here", wpConfigDbUser, wpConfig);
+  shell.sed("-i", "username_here", nickname, wpConfig);
   shell.sed("-i", "password_here", wpDbPassword, wpConfig);
   shell.sed("-i", "localhost", port === 3306 ? host : `${host}:${port}`, wpConfig);
 
@@ -96,7 +94,7 @@ async function configSetup(wpDir, domain, nickname, database) {
   shell.exec(`find ${wpDir} -type d -exec chmod 755 {} \;`);
   shell.exec(`find ${wpDir} -type f -exec chmod 644 {} \;`);
 
-  const sequelize = new Sequelize({ host, port, username: user, password });
+  const sequelize = new Sequelize({ host, port, username, password });
 
   if (wpConfigDbUser !== undefined) {
     await sequelize.query(`DROP USER IF EXISTS ${wpConfigDbUser};`, { type: QueryTypes.RAW });

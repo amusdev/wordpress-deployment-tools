@@ -2,25 +2,26 @@ import fs from "fs";
 import path from "path";
 import { rimrafSync } from "rimraf";
 import shell from "shelljs";
-import downloadService from "../services/download.service.js";
-import extractService from "../services/extract.service.js";
-import installService from "../services/install.service.js";
+import downloadService from "@/services/download.service.js";
+import extractService from "@/services/extract.service.js";
+import installService from "@/services/install.service.js";
+import { MySQLCredential, WPTemplate } from "@/types/common";
 
-function getWpCoreUrl(code) {
+function getWpCoreUrl(code: string) {
   if (code === "latest") {
     return `https://wordpress.org/${code}.zip`;
   }
   return `https://wordpress.org/wordpress-${code}.zip`;
 }
 
-function getWpThemeUrl(id, version = "latest") {
+function getWpThemeUrl(id: string, version = "latest") {
   if (version === "latest") {
     return `https://downloads.wordpress.org/theme/${id}.zip`;
   }
   return `https://downloads.wordpress.org/theme/${id}.${version}.zip`;
 }
 
-function getWpPluginUrl(id, version = "latest") {
+function getWpPluginUrl(id: string, version = "latest") {
   if (version === "latest") {
     return `https://downloads.wordpress.org/plugin/${id}.zip`;
   }
@@ -28,14 +29,7 @@ function getWpPluginUrl(id, version = "latest") {
 }
 
 export default {
-  /**
-   * 
-   * @param {string} directory 
-   * @param {Object} template 
-   * @param {boolean} isDev 
-   * @param {{ host: string, port: string, user: string, password: string }} database 
-   */
-  handler: async function (directory, template, isDev, database) {
+  handler: async function (directory: string, template: WPTemplate, isDev: boolean, database: MySQLCredential) {
     const distDir = `${directory}/${template.domain}`;
     
     console.log("Downloading Wordpress core files...");

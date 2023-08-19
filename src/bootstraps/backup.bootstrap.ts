@@ -5,14 +5,14 @@ import tmp from "tmp";
 import archiver from "archiver";
 import { format } from "date-fns";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import wpHelper from "../helpers/wp.helper.js";
+import wpHelper from "@/helpers/wp.helper.js";
 
-async function backupDatabase(host, port, user, pass, database, fileStream) {
+async function backupDatabase(host: string, port: number, user: string, pass: string, database: string, fileStream: fs.WriteStream) {
   const mysqldump = spawn('mysqldump', [
     '-h',
     host,
     '-P',
-    port,
+    port.toString(),
     '-u',
     user,
     '-p' + pass,
@@ -27,13 +27,16 @@ async function backupDatabase(host, port, user, pass, database, fileStream) {
 }
 
 export default {
-  handler: async function(rootDir, dbUser, dbPass, s3accessKeyId, s3secretAccessKey) {
-    const wpconfig = fs.readFileSync(path.join(rootDir, "wp-config.php"));
+  handler: async function(rootDir: string, dbUser: string, dbPass: string, s3accessKeyId: string, s3secretAccessKey: string) {
+    const wpconfig = fs.readFileSync(path.join(rootDir, "wp-config.php"), 'utf8');
     const { database, dbHost, dbPort } = wpHelper.parseWpConfig(wpconfig);
     const sqlFile = tmp.fileSync({
       mode: 0o600,
       prefix: 'wp-backup-',
     });
+    if (database === undefined) {
+      throw new Error('wp-config.php don\'t contains DB_NAME parameter.');
+    }
     await backupDatabase(dbHost, dbPort, dbUser, dbPass, database, fs.createWriteStream(sqlFile.name));
     const archiveFile = tmp.fileSync({
       mode: 0o600,

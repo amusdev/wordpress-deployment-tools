@@ -1,7 +1,9 @@
-import installService from "../services/install.service.js";
+import shell from 'shelljs';
+import installService from "@/services/install.service.js";
+import { MySQLCredential } from "@/types/common";
 
 export default {
-  handler: async function (directory, domain, database) {
+  handler: async function (directory: string, domain: string, database: MySQLCredential) {
     const { php } = await installService.configSetup(
       directory,
       domain,

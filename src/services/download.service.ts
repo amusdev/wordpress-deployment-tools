@@ -3,11 +3,7 @@ import axios from "axios";
 import tmp from "tmp";
 
 export default {
-  /**
-   * @param {string} url 
-   * @returns {Promise<string>} file path
-   */
-  download: async function (url) {
+  download: async function (url: string) {
     const file = tmp.fileSync({
       mode: 0o644,
       prefix: 'wp-setup-',
@@ -21,9 +17,9 @@ export default {
 
     const fileStream = fs.createWriteStream(file.name);
 
-    return new Promise((resolve, reject) => {
+    return new Promise<string>((resolve, reject) => {
       response.data.pipe(fileStream);
-      let error = null;
+      let error: Error | null = null;
       fileStream.on('error', err => {
         error = err;
         fileStream.close();
