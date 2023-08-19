@@ -4,18 +4,8 @@ import shell from 'shelljs';
 import inquirer from 'inquirer';
 import { Sequelize, QueryTypes } from 'sequelize';
 import wpHelper from '@/helpers/wp.helper.js';
+import mathHelper from '@/helpers/math.helper';
 import { MySQLCredential } from '@/types/common.js';
-
-function random(length: number, { lower = true, upper = true, numeric = true, symbol = false } = {}) {
-  let mask = '';
-  if (lower) mask += 'abcdefghijklmnopqrstuvwxyz';
-  if (upper) mask += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  if (numeric) mask += '0123456789';
-  if (symbol) mask += '~`!@#$%^&*()_+-={}[]:";\'<>?,./|\\';
-  let result = '';
-  for (var i = length; i > 0; --i) result += mask[Math.floor(Math.random() * mask.length)];
-  return result;
-}
 
 async function configSetup(wpDir: string, domain: string, nickname: string, database: MySQLCredential) {
   console.log('Setup OS and MySQL database');
@@ -23,7 +13,7 @@ async function configSetup(wpDir: string, domain: string, nickname: string, data
   let { host, port, username, password } = database;
   let wpConfigDbUser = undefined;
   let wpDb = nickname;
-  let wpDbPassword = random(20, { symbol: true });
+  let wpDbPassword = mathHelper.random(20, { symbol: true });
 
   // check php version for default
   const matches = shell.exec('php -v').stdout.match(/^PHP ([0-9]\.[0-9])/);
@@ -63,7 +53,7 @@ async function configSetup(wpDir: string, domain: string, nickname: string, data
   }
 
   // setting wordpress config
-  shell.sed('-i', 'put your unique phrase here', random(32, { symbol: true }), wpConfig);
+  shell.sed('-i', 'put your unique phrase here', mathHelper.random(32, { symbol: true }), wpConfig);
   shell.sed('-i', 'database_name_here', wpDb, wpConfig);
   shell.sed('-i', 'username_here', nickname, wpConfig);
   shell.sed('-i', 'password_here', wpDbPassword, wpConfig);
