@@ -1,10 +1,10 @@
-import fs from "node:fs";
-import path from "node:path";
+import fs from 'node:fs';
+import path from 'node:path';
 import shell from 'shelljs';
-import inquirer from "inquirer";
-import { Sequelize, QueryTypes } from "sequelize";
-import wpHelper from "@/helpers/wp.helper.js";
-import { MySQLCredential } from "@/types/common.js";
+import inquirer from 'inquirer';
+import { Sequelize, QueryTypes } from 'sequelize';
+import wpHelper from '@/helpers/wp.helper.js';
+import { MySQLCredential } from '@/types/common.js';
 
 function random(length: number, { lower = true, upper = true, numeric = true, symbol = false } = {}) {
   let mask = '';
@@ -56,30 +56,30 @@ async function configSetup(wpDir: string, domain: string, nickname: string, data
   shell.cp(path.join(wpDir, 'wp-config-sample.php'), wpConfig);
 
   // setup user for php runtime
-  if (shell.grep(nickname, "/etc/passwd").code !== 0) {
+  if (shell.grep(nickname, '/etc/passwd').code !== 0) {
     if (shell.exec(`adduser --system --no-create-home --group --disabled-login ${nickname}`).code !== 0) {
       throw new Error(`Failed to create the user named ${nickname}`);
     }
   }
 
   // setting wordpress config
-  shell.sed("-i", "put your unique phrase here", random(32, { symbol: true }), wpConfig);
-  shell.sed("-i", "database_name_here", wpDb, wpConfig);
-  shell.sed("-i", "username_here", nickname, wpConfig);
-  shell.sed("-i", "password_here", wpDbPassword, wpConfig);
-  shell.sed("-i", "localhost", port === 3306 ? host : `${host}:${port}`, wpConfig);
+  shell.sed('-i', 'put your unique phrase here', random(32, { symbol: true }), wpConfig);
+  shell.sed('-i', 'database_name_here', wpDb, wpConfig);
+  shell.sed('-i', 'username_here', nickname, wpConfig);
+  shell.sed('-i', 'password_here', wpDbPassword, wpConfig);
+  shell.sed('-i', 'localhost', port === 3306 ? host : `${host}:${port}`, wpConfig);
 
   const phpConfig = path.join(fpm, `pool.d/${domain}.conf`);
   shell.cp(path.join(fpm, 'pool.d/www.conf'), phpConfig);
 
   // setting host php config
-  shell.sed("-i", "[www]", `[${nickname}]`, phpConfig);
-  shell.sed("-i", "user = www-data", `user = ${nickname}`, phpConfig);
-  shell.sed("-i", "group = www-data", `group = ${nickname}`, phpConfig);
-  shell.sed("-i", `listen = /run/php/php${php}-fpm.sock`, `listen = /run/php/php${php}-fpm-$pool.sock`, phpConfig);
-  shell.sed("-i", `;slowlog = log/$pool.log.slow`, `slowlog = /var/log/php${php}-fpm-$pool.log.slow`, phpConfig);
-  shell.sed("-i", `;php_admin_value[error_log] = /var/log/fpm-php.www.log`, `php_admin_value[error_log] = /var/log/php${php}-fpm-$pool.log.error`, phpConfig);
-  shell.sed("-i", ";php_admin_flag[log_errors] = on", "php_admin_flag[log_errors] = on");
+  shell.sed('-i', '[www]', `[${nickname}]`, phpConfig);
+  shell.sed('-i', 'user = www-data', `user = ${nickname}`, phpConfig);
+  shell.sed('-i', 'group = www-data', `group = ${nickname}`, phpConfig);
+  shell.sed('-i', `listen = /run/php/php${php}-fpm.sock`, `listen = /run/php/php${php}-fpm-$pool.sock`, phpConfig);
+  shell.sed('-i', `;slowlog = log/$pool.log.slow`, `slowlog = /var/log/php${php}-fpm-$pool.log.slow`, phpConfig);
+  shell.sed('-i', `;php_admin_value[error_log] = /var/log/fpm-php.www.log`, `php_admin_value[error_log] = /var/log/php${php}-fpm-$pool.log.error`, phpConfig);
+  shell.sed('-i', ';php_admin_flag[log_errors] = on', 'php_admin_flag[log_errors] = on');
 
   shell.touch(`/var/log/php${php}-fpm-${nickname}.log.error`);
   shell.exec(`chown ${nickname}:${nickname} /var/log/php${php}-fpm-${nickname}.log.error`);

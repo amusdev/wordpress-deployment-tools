@@ -1,6 +1,6 @@
-import fs from "fs";
-import axios from "axios";
-import tmp from "tmp";
+import fs from 'fs';
+import axios from 'axios';
+import tmp from 'tmp';
 
 export default {
   download: async function (url: string) {
@@ -9,7 +9,7 @@ export default {
       prefix: 'wp-setup-',
     });
 
-    const response = await axios.get(url, { responseType: "stream" });
+    const response = await axios.get(url, { responseType: 'stream' });
 
     if (response.status < 200 || response.status >= 300) {
       throw new Error(`Download file return unexcepted code (${response.status})`);

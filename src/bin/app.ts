@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 
-import fs from "fs";
-import { Command } from "commander";
-import path from "path";
-import shell from "shelljs";
-import { Sequelize } from "sequelize";
-import setupBootstrap from "@/bootstraps/setup.bootstrap.js";
-import backupBootstrap from "@/bootstraps/backup.bootstrap.js";
-import templateBootstrap from "@/bootstraps/template.bootstrap.js";
-import repairBootstrap from "@/bootstraps/repair.bootstrap.js";
+import fs from 'fs';
+import { Command } from 'commander';
+import path from 'path';
+import shell from 'shelljs';
+import { Sequelize } from 'sequelize';
+import setupBootstrap from '@/bootstraps/setup.bootstrap.js';
+import backupBootstrap from '@/bootstraps/backup.bootstrap.js';
+import templateBootstrap from '@/bootstraps/template.bootstrap.js';
+import repairBootstrap from '@/bootstraps/repair.bootstrap.js';
 
 const program = new Command();
 
@@ -110,10 +110,10 @@ program
   .action(async (options) => {
     const { username, password, directory, accessKeyId, secretAccessKey } = options;
     if (!fs.existsSync(directory) || !fs.lstatSync(directory).isDirectory()) {
-      throw new Error("Root directory not exists.");
+      throw new Error('Root directory not exists.');
     }
-    if (directory === "/") {
-      throw new Error("Cannot archive the root directory.");
+    if (directory === '/') {
+      throw new Error('Cannot archive the root directory.');
     }
     await backupBootstrap.handler(directory, username, password, accessKeyId, secretAccessKey);
   });

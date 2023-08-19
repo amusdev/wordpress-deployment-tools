@@ -1,11 +1,11 @@
-import fs from "fs";
-import path from "path";
-import { spawn } from "child_process";
-import tmp from "tmp";
-import archiver from "archiver";
-import { format } from "date-fns";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import wpHelper from "@/helpers/wp.helper.js";
+import fs from 'fs';
+import path from 'path';
+import { spawn } from 'child_process';
+import tmp from 'tmp';
+import archiver from 'archiver';
+import { format } from 'date-fns';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import wpHelper from '@/helpers/wp.helper.js';
 
 async function backupDatabase(host: string, port: number, user: string, pass: string, database: string, fileStream: fs.WriteStream) {
   const mysqldump = spawn('mysqldump', [
@@ -28,7 +28,7 @@ async function backupDatabase(host: string, port: number, user: string, pass: st
 
 export default {
   handler: async function(rootDir: string, dbUser: string, dbPass: string, s3accessKeyId: string, s3secretAccessKey: string) {
-    const wpconfig = fs.readFileSync(path.join(rootDir, "wp-config.php"), 'utf8');
+    const wpconfig = fs.readFileSync(path.join(rootDir, 'wp-config.php'), 'utf8');
     const { database, dbHost, dbPort } = wpHelper.parseWpConfig(wpconfig);
     const sqlFile = tmp.fileSync({
       mode: 0o600,
@@ -61,7 +61,7 @@ export default {
 
     // archive entire website into archive
     archive.directory(rootDir, 'website');
-    archive.file(archiveFile.name, { name: "dump.sql" });
+    archive.file(archiveFile.name, { name: 'dump.sql' });
 
     await archive.finalize();
 
@@ -72,16 +72,16 @@ export default {
       },
     });
 
-    const name = rootDir.endsWith("/") ? rootDir.split("/").slice(-2)[0] : rootDir.split("/").pop();
+    const name = rootDir.endsWith('/') ? rootDir.split('/').slice(-2)[0] : rootDir.split('/').pop();
 
     const command = new PutObjectCommand({
-      Bucket: "amus-dev-wp-backup",
-      Key: `${name}/backup-${format(new Date(), "yyyyMMddHHmmss")}`,
+      Bucket: 'amus-dev-wp-backup',
+      Key: `${name}/backup-${format(new Date(), 'yyyyMMddHHmmss')}`,
       Body: fs.createReadStream(archiveFile.name),
     });
 
     await client.send(command);
 
-    console.log("Finished to backup the website.");
+    console.log('Finished to backup the website.');
   }
 }

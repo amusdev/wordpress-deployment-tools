@@ -1,4 +1,4 @@
-import extract from "extract-zip";
+import extract from 'extract-zip';
 
 export default {
   zip: async function (source: string, dist: string) {

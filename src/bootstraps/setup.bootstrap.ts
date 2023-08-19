@@ -1,28 +1,28 @@
-import fs from "fs";
-import path from "path";
-import { rimrafSync } from "rimraf";
-import shell from "shelljs";
-import downloadService from "@/services/download.service.js";
-import extractService from "@/services/extract.service.js";
-import installService from "@/services/install.service.js";
-import { MySQLCredential, WPTemplate } from "@/types/common";
+import fs from 'fs';
+import path from 'path';
+import { rimrafSync } from 'rimraf';
+import shell from 'shelljs';
+import downloadService from '@/services/download.service.js';
+import extractService from '@/services/extract.service.js';
+import installService from '@/services/install.service.js';
+import { MySQLCredential, WPTemplate } from '@/types/common';
 
 function getWpCoreUrl(code: string) {
-  if (code === "latest") {
+  if (code === 'latest') {
     return `https://wordpress.org/${code}.zip`;
   }
   return `https://wordpress.org/wordpress-${code}.zip`;
 }
 
-function getWpThemeUrl(id: string, version = "latest") {
-  if (version === "latest") {
+function getWpThemeUrl(id: string, version = 'latest') {
+  if (version === 'latest') {
     return `https://downloads.wordpress.org/theme/${id}.zip`;
   }
   return `https://downloads.wordpress.org/theme/${id}.${version}.zip`;
 }
 
-function getWpPluginUrl(id: string, version = "latest") {
-  if (version === "latest") {
+function getWpPluginUrl(id: string, version = 'latest') {
+  if (version === 'latest') {
     return `https://downloads.wordpress.org/plugin/${id}.zip`;
   }
   return `https://downloads.wordpress.org/plugin/${id}.${version}.zip`;
@@ -32,12 +32,12 @@ export default {
   handler: async function (directory: string, template: WPTemplate, isDev: boolean, database: MySQLCredential) {
     const distDir = `${directory}/${template.domain}`;
     
-    console.log("Downloading Wordpress core files...");
+    console.log('Downloading Wordpress core files...');
     const tmpfile = await downloadService.download(getWpCoreUrl(template.version));
     await extractService.zip(tmpfile, directory);
     fs.renameSync(`${directory}/wordpress`, distDir);
 
-    const themeDir = path.join(distDir, "wp-content/themes");
+    const themeDir = path.join(distDir, 'wp-content/themes');
     for (const id in template.themes) {
       console.log(`Downloading theme ${id} files...`);
       const theme = await downloadService.download(getWpThemeUrl(id, template.themes[id]));
@@ -48,7 +48,7 @@ export default {
       await extractService.zip(theme, themeDir);
     }
 
-    const pluginDir = path.join(distDir, "wp-content/plugins");
+    const pluginDir = path.join(distDir, 'wp-content/plugins');
     for (const id in template.plugins) {
       console.log(`Downloading plugin ${id} files...`);
       const plugin = await downloadService.download(getWpPluginUrl(id, template.plugins[id]));
@@ -59,7 +59,7 @@ export default {
       await extractService.zip(plugin, pluginDir);
     }
 
-    console.log("Finished to download all files");
+    console.log('Finished to download all files');
 
     if (isDev) {
       // is development mode then skip to modify the os and database
@@ -69,7 +69,7 @@ export default {
     const { php } = await installService.configSetup(
       distDir,
       template.domain,
-      template.domain.replaceAll(/\.|-/g, "_"),
+      template.domain.replaceAll(/\.|-/g, '_'),
       database
     );
 
