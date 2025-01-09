@@ -1,9 +1,11 @@
-import fs from 'fs';
 import axios from 'axios';
+import fs from 'fs';
 import tmp from 'tmp';
 
-export default {
-  download: async function (url: string) {
+import { getWpBundleURL, getWpPluginBundleURL, getWpThemeBundleURL } from '@/util/url';
+
+export default class HTTPService {
+  static async downloadFile(url: string) {
     const file = tmp.fileSync({
       mode: 0o644,
       prefix: 'wp-setup-',
@@ -20,7 +22,7 @@ export default {
     return new Promise<string>((resolve, reject) => {
       response.data.pipe(fileStream);
       let error: Error | null = null;
-      fileStream.on('error', err => {
+      fileStream.on('error', (err) => {
         error = err;
         fileStream.close();
         reject(err);
@@ -31,5 +33,14 @@ export default {
         }
       });
     });
+  }
+  static async downloadWpBundleFile(version: string) {
+    return this.downloadFile(getWpBundleURL(version));
+  }
+  static async downloadWpThemeBundleFile(id: string, version: string) {
+    return this.downloadFile(getWpThemeBundleURL(id, version));
+  }
+  static async downloadWpPluginBundleFile(id: string, version: string) {
+    return this.downloadFile(getWpPluginBundleURL(id, version));
   }
 }

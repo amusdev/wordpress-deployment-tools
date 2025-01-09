@@ -1,5 +1,6 @@
-import { describe, expect, test } from '@jest/globals';
-import wpHelper from '@/helpers/wp.helper';
+import { describe, expect, test } from 'vitest';
+
+import { getWpConfig } from './config';
 
 // capture from https://github.com/WordPress/WordPress/blob/6.3/wp-config-sample.php
 const template = `
@@ -101,9 +102,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once ABSPATH . 'wp-settings.php';
 `;
 
-describe('Test wp helper js', () => {
+describe('getWpConfig', () => {
   test('parse wordpress config and get correct result', () => {
-    const result = wpHelper.parseWpConfig(template);
+    const result = getWpConfig(template);
     expect(result.dbHost).toBe('localhost');
     expect(result.dbPort).toBe(3306);
     expect(result.dbUser).toBe('username_here');

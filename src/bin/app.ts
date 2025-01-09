@@ -1,14 +1,14 @@
 #!/usr/bin/env node
-
-import fs from 'fs';
 import { Command } from 'commander';
+import fs from 'fs';
 import path from 'path';
 import shell from 'shelljs';
-import { Sequelize } from 'sequelize';
-import setupBootstrap from '@/bootstraps/setup.bootstrap.js';
-import backupBootstrap from '@/bootstraps/backup.bootstrap.js';
-import templateBootstrap from '@/bootstraps/template.bootstrap.js';
-import repairBootstrap from '@/bootstraps/repair.bootstrap.js';
+
+import backupBootstrap from '@/bootstrap/backup.js';
+import repairBootstrap from '@/bootstrap/repair.js';
+import setupBootstrap from '@/bootstrap/setup.js';
+import templateBootstrap from '@/bootstrap/template.js';
+import DatabaseService from '@/service/database';
 
 const program = new Command();
 
@@ -17,11 +17,9 @@ program
   .description('CLI to maintenance Wordpress website')
   .version('1.0.0', '-v, --version');
 
-program
-  .command('template')
-  .action(async function() {
-    await templateBootstrap.handler();
-  });
+program.command('template').action(async function () {
+  await templateBootstrap.handler();
+});
 
 program
   .command('build')
@@ -45,17 +43,17 @@ program
       if (process.getuid && process.getuid() !== 0) {
         throw new Error('The process needs root permission when production mode.');
       }
-      if ((host === undefined || host === 'localhost' || host === '127.0.0.1') && !shell.which('mysqld')) {
+      if (
+        (host === undefined || host === 'localhost' || host === '127.0.0.1') &&
+        !shell.which('mysqld')
+      ) {
         throw new Error('Using localhost or 127.0.0.1 must be installed MySQL database on host.');
       }
     }
-    const sequelize = new Sequelize({ host, port, username, password });
-    try {
-      await sequelize.authenticate();
-    } catch (e) {
-      throw new Error('Failed To Connect MySQL Server.', { cause: e });
+    const accessible = await new DatabaseService({ host, port, username, password }).isAccessible();
+    if (accessible) {
+      return;
     }
-    await sequelize.close();
     const template = JSON.parse(fs.readFileSync(templateFilePath, 'utf8'));
     await setupBootstrap.handler(
       path.isAbsolute(directory) ? directory : path.join(process.cwd(), directory),
@@ -82,21 +80,17 @@ program
     if (process.getuid && process.getuid() !== 0) {
       throw new Error('The process needs root permission when production mode.');
     }
-    if ((host === undefined || host === 'localhost' || host === '127.0.0.1') && !shell.which('mysqld')) {
+    if (
+      (host === undefined || host === 'localhost' || host === '127.0.0.1') &&
+      !shell.which('mysqld')
+    ) {
       throw new Error('Using localhost or 127.0.0.1 must be installed MySQL database on host.');
     }
-    const sequelize = new Sequelize({ host, port, username, password });
-    try {
-      await sequelize.authenticate();
-    } catch (e) {
-      throw new Error('Failed To Connect MySQL Server.', { cause: e });
+    const accessible = await new DatabaseService({ host, port, username, password }).isAccessible();
+    if (accessible) {
+      return;
     }
-    await sequelize.close();
-    await repairBootstrap.handler(
-      directory,
-      domain,
-      { host, port, username, password }
-    );
+    await repairBootstrap.handler(directory, domain, { host, port, username, password });
   });
 
 program

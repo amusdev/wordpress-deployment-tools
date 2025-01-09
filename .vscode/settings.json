@@ -1,0 +1,11 @@
+{
+  "[typescript][json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+  },
+  "files.associations": {
+    ".env.*": "properties"
+  },
+  "typescript.tsserver.experimental.enableProjectDiagnostics": true,
+  "typescript.tsdk": "node_modules\\typescript\\lib"
+}

@@ -1,13 +1,20 @@
-import fs from 'fs';
-import path from 'path';
-import { spawn } from 'child_process';
-import tmp from 'tmp';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import archiver from 'archiver';
+import { spawn } from 'child_process';
 import { format } from 'date-fns';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import wpHelper from '@/helpers/wp.helper.js';
+import fs from 'fs';
+import tmp from 'tmp';
 
-async function backupDatabase(host: string, port: number, user: string, pass: string, database: string, fileStream: fs.WriteStream) {
+import { getWpConfigByPath } from '@/util/config';
+
+async function backupDatabase(
+  host: string,
+  port: number,
+  user: string,
+  pass: string,
+  database: string,
+  fileStream: fs.WriteStream
+) {
   const mysqldump = spawn('mysqldump', [
     '-h',
     host,
@@ -16,9 +23,9 @@ async function backupDatabase(host: string, port: number, user: string, pass: st
     '-u',
     user,
     '-p' + pass,
-    database
+    database,
   ]);
-  return new Promise(function(resolve, reject) {
+  return new Promise(function (resolve, reject) {
     mysqldump.stdout.on('error', reject).pipe(fileStream);
 
     fileStream.on('finish', resolve);
@@ -27,17 +34,30 @@ async function backupDatabase(host: string, port: number, user: string, pass: st
 }
 
 export default {
-  handler: async function(rootDir: string, dbUser: string, dbPass: string, s3accessKeyId: string, s3secretAccessKey: string) {
-    const wpconfig = fs.readFileSync(path.join(rootDir, 'wp-config.php'), 'utf8');
-    const { database, dbHost, dbPort } = wpHelper.parseWpConfig(wpconfig);
+  handler: async function (
+    rootDir: string,
+    dbUser: string,
+    dbPass: string,
+    s3accessKeyId: string,
+    s3secretAccessKey: string
+  ) {
+    const { database, dbHost, dbPort } = getWpConfigByPath(rootDir);
     const sqlFile = tmp.fileSync({
       mode: 0o600,
       prefix: 'wp-backup-',
+      postfix: '.sql',
     });
     if (database === undefined) {
-      throw new Error('wp-config.php don\'t contains DB_NAME parameter.');
+      throw new Error("wp-config.php don't contains DB_NAME parameter.");
     }
-    await backupDatabase(dbHost, dbPort, dbUser, dbPass, database, fs.createWriteStream(sqlFile.name));
+    await backupDatabase(
+      dbHost,
+      dbPort,
+      dbUser,
+      dbPass,
+      database,
+      fs.createWriteStream(sqlFile.name)
+    );
     const archiveFile = tmp.fileSync({
       mode: 0o600,
       prefix: 'wp-backup-',
@@ -45,16 +65,16 @@ export default {
     });
     const outputStream = fs.createWriteStream(archiveFile.name);
     const archive = archiver('zip', {
-      zlib: { level: 9 }
+      zlib: { level: 9 },
     });
-    outputStream.on('close', function() {
+    outputStream.on('close', function () {
       console.log(archive.pointer() + ' total bytes');
       console.log('archiver has been finalized and the output file descriptor has closed.');
     });
-    outputStream.on('end', function() {
+    outputStream.on('end', function () {
       console.log('Data has been drained');
     });
-    archive.on('error', function(err) {
+    archive.on('error', function (err) {
       throw err;
     });
     archive.pipe(outputStream);
@@ -83,5 +103,5 @@ export default {
     await client.send(command);
 
     console.log('Finished to backup the website.');
-  }
-}
+  },
+};
