@@ -1,7 +1,6 @@
-import shell from 'shelljs';
-
 import InstallationService from '@/service/installation';
 import { MySQLCredential } from '@/type/common';
+import { restartNginxService, restartPHPFPMService } from '@/util/unix';
 
 export default class RepairBootstrap {
   static async handler(directory: string, domain: string, database: MySQLCredential) {
@@ -12,12 +11,7 @@ export default class RepairBootstrap {
       database
     );
 
-    if (shell.exec(`systemctl restart nginx`).code !== 0) {
-      throw new Error('Failed to restart php service');
-    }
-
-    if (shell.exec(`systemctl restart php${phpVer}-fpm`).code !== 0) {
-      throw new Error('Failed to restart php service');
-    }
+    restartNginxService();
+    restartPHPFPMService(phpVer);
   }
 }

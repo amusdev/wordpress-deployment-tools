@@ -1,11 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 import { rimrafSync } from 'rimraf';
-import shell from 'shelljs';
 
 import HTTPService from '@/service/http';
 import InstallationService from '@/service/installation';
 import { MySQLCredential, WPTemplate } from '@/type/common';
+import { restartNginxService, restartPHPFPMService } from '@/util/unix';
 import { unzip } from '@/util/zip';
 
 export default class SetupBootstrap {
@@ -58,12 +58,7 @@ export default class SetupBootstrap {
       database
     );
 
-    if (shell.exec(`systemctl restart nginx`).code !== 0) {
-      throw new Error('Failed to restart php service');
-    }
-
-    if (shell.exec(`systemctl restart php${phpVer}-fpm`).code !== 0) {
-      throw new Error('Failed to restart php service');
-    }
+    restartNginxService();
+    restartPHPFPMService(phpVer);
   }
 }

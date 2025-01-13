@@ -3,6 +3,7 @@ import shell from 'shelljs';
 import { getPHPErrorLogPath } from './path';
 
 import PHPVersionNotFoundError from '@/error/PHPVersionNotFoundError';
+import RestartServiceError from '@/error/RestartServiceError';
 
 export function isPHPInstalled() {
   return shell.which('php');
@@ -10,6 +11,18 @@ export function isPHPInstalled() {
 
 export function isMySQLInstalled() {
   return shell.which('mysqld');
+}
+
+export function restartNginxService() {
+  if (shell.exec(`systemctl restart nginx`).code !== 0) {
+    throw new RestartServiceError('nginx');
+  }
+}
+
+export function restartPHPFPMService(phpVer: string) {
+  if (shell.exec(`systemctl restart php${phpVer}-fpm`).code !== 0) {
+    throw new RestartServiceError('php-fpm');
+  }
 }
 
 export function createPHPErrorLogFile(phpVer: string, identity: string) {
