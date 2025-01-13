@@ -1,40 +1,14 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import archiver from 'archiver';
-import { spawn } from 'child_process';
 import { format } from 'date-fns';
 import fs from 'fs';
 import tmp from 'tmp';
 
 import { getWpConfigByPath } from '@/util/config';
+import { backup } from '@/util/database';
+import { zipFiles } from '@/util/zip';
 
-async function backupDatabase(
-  host: string,
-  port: number,
-  user: string,
-  pass: string,
-  database: string,
-  fileStream: fs.WriteStream
-) {
-  const mysqldump = spawn('mysqldump', [
-    '-h',
-    host,
-    '-P',
-    port.toString(),
-    '-u',
-    user,
-    '-p' + pass,
-    database,
-  ]);
-  return new Promise(function (resolve, reject) {
-    mysqldump.stdout.on('error', reject).pipe(fileStream);
-
-    fileStream.on('finish', resolve);
-    fileStream.on('error', reject);
-  });
-}
-
-export default {
-  handler: async function (
+export default class BackupBootstrap {
+  static async handler(
     rootDir: string,
     dbUser: string,
     dbPass: string,
@@ -50,40 +24,14 @@ export default {
     if (database === undefined) {
       throw new Error("wp-config.php don't contains DB_NAME parameter.");
     }
-    await backupDatabase(
-      dbHost,
-      dbPort,
-      dbUser,
-      dbPass,
-      database,
-      fs.createWriteStream(sqlFile.name)
-    );
+    await backup(fs.createWriteStream(sqlFile.name), dbHost, dbPort, dbUser, dbPass, database);
+
     const archiveFile = tmp.fileSync({
       mode: 0o600,
       prefix: 'wp-backup-',
       postfix: '.zip',
     });
-    const outputStream = fs.createWriteStream(archiveFile.name);
-    const archive = archiver('zip', {
-      zlib: { level: 9 },
-    });
-    outputStream.on('close', function () {
-      console.log(archive.pointer() + ' total bytes');
-      console.log('archiver has been finalized and the output file descriptor has closed.');
-    });
-    outputStream.on('end', function () {
-      console.log('Data has been drained');
-    });
-    archive.on('error', function (err) {
-      throw err;
-    });
-    archive.pipe(outputStream);
-
-    // archive entire website into archive
-    archive.directory(rootDir, 'website');
-    archive.file(archiveFile.name, { name: 'dump.sql' });
-
-    await archive.finalize();
+    await zipFiles(fs.createWriteStream(archiveFile.name), rootDir, archiveFile.name);
 
     const client = new S3Client({
       credentials: {
@@ -103,5 +51,5 @@ export default {
     await client.send(command);
 
     console.log('Finished to backup the website.');
-  },
-};
+  }
+}

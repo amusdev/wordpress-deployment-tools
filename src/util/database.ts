@@ -17,6 +17,13 @@ export async function backup(
     '-u',
     user,
     '-p' + pass,
+    '--protocol=tcp',
+    '--column-statistics=FALSE',
+    '--routines',
+    '--events',
+    '--single-transaction',
+    // https://stackoverflow.com/questions/75183032/mysqldump-for-aws-rds-flush-tables-error-on-linux-only
+    '--set-gtid-purged=OFF',
     database,
   ]);
   return new Promise(function (resolve, reject) {

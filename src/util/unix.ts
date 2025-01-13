@@ -4,6 +4,14 @@ import { getPHPErrorLogPath } from './path';
 
 import PHPVersionNotFoundError from '@/error/PHPVersionNotFoundError';
 
+export function isPHPInstalled() {
+  return shell.which('php');
+}
+
+export function isMySQLInstalled() {
+  return shell.which('mysqld');
+}
+
 export function createPHPErrorLogFile(phpVer: string, identity: string) {
   const path = getPHPErrorLogPath(phpVer, identity);
   shell.touch(path);

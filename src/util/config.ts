@@ -4,7 +4,7 @@ import { Engine } from 'php-parser';
 import { getWpConfigPath } from './path';
 
 export function getWpConfigByPath(wpInstalledPath: string, options?: any) {
-  const fileContent = getWpConfigPath(wpInstalledPath);
+  const fileContent = fs.readFileSync(getWpConfigPath(wpInstalledPath), 'utf8');
   return getWpConfig(fileContent, options);
 }
 

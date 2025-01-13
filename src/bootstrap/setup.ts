@@ -8,8 +8,8 @@ import InstallationService from '@/service/installation';
 import { MySQLCredential, WPTemplate } from '@/type/common';
 import { unzip } from '@/util/zip';
 
-export default {
-  handler: async function (
+export default class SetupBootstrap {
+  static async handler(
     directory: string,
     template: WPTemplate,
     isDev: boolean,
@@ -65,5 +65,5 @@ export default {
     if (shell.exec(`systemctl restart php${phpVer}-fpm`).code !== 0) {
       throw new Error('Failed to restart php service');
     }
-  },
-};
+  }
+}

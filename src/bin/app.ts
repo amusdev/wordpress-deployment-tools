@@ -2,13 +2,14 @@
 import { Command } from 'commander';
 import fs from 'fs';
 import path from 'path';
-import shell from 'shelljs';
 
-import backupBootstrap from '@/bootstrap/backup.js';
-import repairBootstrap from '@/bootstrap/repair.js';
-import setupBootstrap from '@/bootstrap/setup.js';
-import templateBootstrap from '@/bootstrap/template.js';
+import BackupBootstrap from '@/bootstrap/backup.js';
+import RepairBootstrap from '@/bootstrap/repair.js';
+import SetupBootstrap from '@/bootstrap/setup.js';
+import TemplateBootstrap from '@/bootstrap/template.js';
 import DatabaseService from '@/service/database';
+import { isDirectory, isFile } from '@/util/path';
+import { isMySQLInstalled, isPHPInstalled } from '@/util/unix';
 
 const program = new Command();
 
@@ -18,7 +19,7 @@ program
   .version('1.0.0', '-v, --version');
 
 program.command('template').action(async function () {
-  await templateBootstrap.handler();
+  await TemplateBootstrap.handler();
 });
 
 program
@@ -33,10 +34,10 @@ program
   .requiredOption('-d, --directory <directory>', 'root directory for website', '.')
   .action(async (options) => {
     const { template: templateFilePath, directory, host, port, username, password, dev } = options;
-    if (!fs.existsSync(templateFilePath)) {
-      throw new Error(`File not exists in ${templateFilePath}.`);
+    if (!isFile(templateFilePath)) {
+      throw new Error('Please provide the correct file path.');
     }
-    if (!shell.which('php')) {
+    if (!isPHPInstalled()) {
       throw new Error('The host need to install php to make it works.');
     }
     if (!dev) {
@@ -45,7 +46,7 @@ program
       }
       if (
         (host === undefined || host === 'localhost' || host === '127.0.0.1') &&
-        !shell.which('mysqld')
+        !isMySQLInstalled()
       ) {
         throw new Error('Using localhost or 127.0.0.1 must be installed MySQL database on host.');
       }
@@ -55,7 +56,7 @@ program
       return;
     }
     const template = JSON.parse(fs.readFileSync(templateFilePath, 'utf8'));
-    await setupBootstrap.handler(
+    await SetupBootstrap.handler(
       path.isAbsolute(directory) ? directory : path.join(process.cwd(), directory),
       template,
       dev,
@@ -74,7 +75,7 @@ program
   .requiredOption('-d, --directory <directory>', 'root directory for website', '.')
   .action(async (options) => {
     const { domain, directory, host, port, username, password } = options;
-    if (!shell.which('php')) {
+    if (!isPHPInstalled()) {
       throw new Error('The host need to install php to make it works.');
     }
     if (process.getuid && process.getuid() !== 0) {
@@ -82,7 +83,7 @@ program
     }
     if (
       (host === undefined || host === 'localhost' || host === '127.0.0.1') &&
-      !shell.which('mysqld')
+      !isMySQLInstalled()
     ) {
       throw new Error('Using localhost or 127.0.0.1 must be installed MySQL database on host.');
     }
@@ -90,7 +91,7 @@ program
     if (accessible) {
       return;
     }
-    await repairBootstrap.handler(directory, domain, { host, port, username, password });
+    await RepairBootstrap.handler(directory, domain, { host, port, username, password });
   });
 
 program
@@ -103,13 +104,13 @@ program
   .requiredOption('-k, --secret-access-key <secretAccessKey>', 'AWS s3 bucket secret access key')
   .action(async (options) => {
     const { username, password, directory, accessKeyId, secretAccessKey } = options;
-    if (!fs.existsSync(directory) || !fs.lstatSync(directory).isDirectory()) {
+    if (!isDirectory(directory)) {
       throw new Error('Root directory not exists.');
     }
     if (directory === '/') {
       throw new Error('Cannot archive the root directory.');
     }
-    await backupBootstrap.handler(directory, username, password, accessKeyId, secretAccessKey);
+    await BackupBootstrap.handler(directory, username, password, accessKeyId, secretAccessKey);
   });
 
 program.parseAsync();
