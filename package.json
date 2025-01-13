@@ -44,7 +44,7 @@
     "@types/archiver": "^5.3.2",
     "@types/ini": "^4.1.1",
     "@types/inquirer": "^9.0.3",
-    "@types/node": "^20.5.1",
+    "@types/node": "^22.10.5",
     "@types/psl": "^1.1.0",
     "@types/shelljs": "^0.8.12",
     "@types/tmp": "^0.2.3",
