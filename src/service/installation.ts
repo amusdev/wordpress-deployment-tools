@@ -86,7 +86,7 @@ export default class InstallationService {
     // finish directory with permission
     setWpInstalledPathPermission(wpDir, identity);
 
-    const databaseService = new DatabaseService({ host, port, username, password });
+    const databaseService = new DatabaseService({ host, port, user: username, password });
 
     if (wpConfigDbUser !== undefined) {
       await databaseService.dropUser(wpConfigDbUser);

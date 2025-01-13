@@ -1,31 +1,41 @@
-import { Options, QueryTypes, Sequelize } from 'sequelize';
+import mysql from 'mysql2/promise';
 
 export default class DatabaseService {
-  sequelize: Sequelize;
-  constructor(options?: Options) {
-    this.sequelize = new Sequelize(options);
+  options?: mysql.ConnectionOptions;
+  constructor(options?: mysql.ConnectionOptions) {
+    this.options = options;
+  }
+  private async createConnection() {
+    return await mysql.createConnection(
+      this.options || { host: 'localhost', port: 3306, user: 'root', password: '' }
+    );
   }
   async isAccessible() {
     try {
-      await this.sequelize.authenticate();
+      const connection = await this.createConnection();
+      connection.destroy();
       return true;
     } catch (e) {
       console.error('Failed To Connect MySQL Server.', { cause: e });
       return false;
-    } finally {
-      await this.sequelize.close();
     }
   }
   async dropUser(identity: string) {
-    await this.sequelize.query(`DROP USER IF EXISTS ${identity};`, { type: QueryTypes.RAW });
+    const connection = await this.createConnection();
+    await connection.execute(`DROP USER IF EXISTS ${identity};`);
+    connection.destroy();
   }
   async createDatabase(database: string) {
-    await this.sequelize.query(`CREATE DATABASE IF NOT EXISTS ${database};`);
+    const connection = await this.createConnection();
+    await connection.execute(`CREATE DATABASE IF NOT EXISTS ${database};`);
+    connection.destroy();
   }
   async createUserAndGrantPermission(identity: string, password: string, database: string) {
-    await this.sequelize.query(`
+    const connection = await this.createConnection();
+    await connection.execute(`
       CREATE USER '${identity}'@'%' IDENTIFIED WITH mysql_native_password BY '${password}';
       GRANT ALL PRIVILEGES ON ${database}.* TO '${identity}'@'%';
       FLUSH PRIVILEGES;`);
+    connection.destroy();
   }
 }

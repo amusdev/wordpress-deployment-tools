@@ -51,7 +51,12 @@ program
         throw new Error('Using localhost or 127.0.0.1 must be installed MySQL database on host.');
       }
     }
-    const accessible = await new DatabaseService({ host, port, username, password }).isAccessible();
+    const accessible = await new DatabaseService({
+      host,
+      port,
+      user: username,
+      password,
+    }).isAccessible();
     if (accessible) {
       return;
     }
@@ -87,7 +92,12 @@ program
     ) {
       throw new Error('Using localhost or 127.0.0.1 must be installed MySQL database on host.');
     }
-    const accessible = await new DatabaseService({ host, port, username, password }).isAccessible();
+    const accessible = await new DatabaseService({
+      host,
+      port,
+      user: username,
+      password,
+    }).isAccessible();
     if (accessible) {
       return;
     }
