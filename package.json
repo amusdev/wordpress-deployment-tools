@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "bun build ./src/bin/app.ts --compile --outfile wp-tool",
-    "test": "npm run test:unit & npm run test:e2e",
+    "test": "bun run test:unit & bun run test:e2e",
     "test:unit": "vitest --project unit",
     "test:unit:coverage": "vitest run --project unit --coverage",
     "test:e2e": "vitest --project e2e",

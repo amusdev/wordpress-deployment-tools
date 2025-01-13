@@ -18,6 +18,6 @@ jobs:
       - name: Use Latest Bun Bundle
         uses: oven-sh/setup-bun@v2
       - run: bun install
-      - run: npx vitest --project unit --coverage.enabled true --watch=false
+      - run: bunx vitest --project unit --coverage.enabled true --watch=false
       - name: 'Report Coverage'
         uses: davelosert/vitest-coverage-report-action@v2
