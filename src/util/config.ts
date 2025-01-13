@@ -1,7 +1,11 @@
+import { path as appRootPath } from 'app-root-path';
 import fs from 'fs';
+import path from 'path';
 import { Engine } from 'php-parser';
 
 import { getWpConfigPath } from './path';
+
+import PHPIdentifyMalformatError from '@/error/PHPIdentifyMalformatError';
 
 export function getWpConfigByPath(wpInstalledPath: string, options?: any) {
   const fileContent = fs.readFileSync(getWpConfigPath(wpInstalledPath), 'utf8');
@@ -56,6 +60,9 @@ export function setupInitialWpConfig(
 }
 
 export function setupInitialPHPConfig(fileContent: string, phpVer: string, siteIdentify: string) {
+  if (!/^[a-z0-9_]+$/i.test(siteIdentify)) {
+    throw new PHPIdentifyMalformatError('site identify only allow a-z, A-Z, 0-9 and underscore.');
+  }
   return fileContent
     .replace('[www]', `[${siteIdentify}]`)
     .replace('user = www-data', `user = ${siteIdentify}`)
@@ -72,7 +79,12 @@ export function setupInitialPHPConfig(fileContent: string, phpVer: string, siteI
     .replace(';php_admin_flag[log_errors] = on', 'php_admin_flag[log_errors] = on');
 }
 
-export function getNginxVirtualHostConfig(host: string, altHost: string) {
-  const config = fs.readFileSync('../template/nginx-virtual-host.conf', { encoding: 'utf8' });
-  return config.replace(/{{host}}/g, host).replace(/{{alt_host}}/g, altHost);
+export function getNginxVirtualHostConfig(phpVer: string, host: string, altHost: string) {
+  const config = fs.readFileSync(path.join(appRootPath, 'src/template/nginx-virtual-host.conf'), {
+    encoding: 'utf8',
+  });
+  return config
+    .replace(/{{phpVer}}/g, phpVer)
+    .replace(/{{host}}/g, host)
+    .replace(/{{alt_host}}/g, altHost);
 }

@@ -80,7 +80,7 @@ export default class InstallationService {
     createPHPErrorLogFile(phpVer, identity);
 
     // setup nginx
-    const virtualHostConfig = getNginxVirtualHostConfig(domain, identity);
+    const virtualHostConfig = getNginxVirtualHostConfig(phpVer, domain, identity);
     fs.writeFileSync(unixpath.nginx.host, virtualHostConfig);
 
     // finish directory with permission
