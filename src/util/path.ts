@@ -23,7 +23,7 @@ export function getWpSampleConfigPath(wpInstalledPath: string) {
 }
 
 export function getWpConfigPath(wpInstalledPath: string) {
-  return path.join(wpInstalledPath, 'wp-config-sample.php');
+  return path.join(wpInstalledPath, 'wp-config.php');
 }
 
 export function getPHPPoolDir(phpVer: string) {
