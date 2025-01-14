@@ -1,10 +1,19 @@
-import { describe, expect, test } from 'vitest';
+import fs from 'fs';
+import { describe, expect, test, vi } from 'vitest';
 
-import { getPHPErrorLogPath, getUnixPath, getWpSampleConfigPath } from './path';
+import {
+  getPHPErrorLogPath,
+  getUnixPath,
+  getWpSampleConfigPath,
+  isDirectory,
+  isFile,
+} from './path';
 
 const path = '/var/www/';
 const phpVer = '8.1';
 const identity = 'my.site';
+
+vi.mock('fs');
 
 describe('getUnixPath()', () => {
   test('return correct paths', () => {
@@ -27,5 +36,29 @@ describe('getWpSampleConfigPath()', () => {
 describe('getPHPErrorLogPath()', () => {
   test('return correct paths', () => {
     expect(getPHPErrorLogPath(phpVer, identity)).toBe('/var/log/php8.1-fpm-my.site.log.error');
+  });
+});
+
+describe('isDirectory()', () => {
+  test('return true', () => {
+    vi.mocked(fs.existsSync).mockReturnValueOnce(true);
+    vi.mocked(fs.lstatSync).mockReturnValueOnce({
+      isDirectory() {
+        return true;
+      },
+    } as any);
+    expect(isDirectory('/')).toBe(true);
+  });
+});
+
+describe('isFile()', () => {
+  test('return true', () => {
+    vi.mocked(fs.existsSync).mockReturnValueOnce(true);
+    vi.mocked(fs.lstatSync).mockReturnValueOnce({
+      isFile() {
+        return true;
+      },
+    } as any);
+    expect(isFile('/')).toBe(true);
   });
 });

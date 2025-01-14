@@ -17,10 +17,10 @@ import PHPIdentifyMalformatError from '@/error/PHPIdentifyMalformatError';
 describe('getWpConfigByPath()', () => {
   test('should call getWpConfig()', () => {
     const result = getWpConfigByPath(path.join(appRootPath, 'test/wordpress'));
-    expect(result.dbHost).toBe('localhost');
-    expect(result.dbPort).toBe(3306);
-    expect(result.dbUser).toBe('username_here');
-    expect(result.database).toBe('database_name_here');
+    expect(result.dbHost).toBe('database.host.local');
+    expect(result.dbPort).toBe(3389);
+    expect(result.dbUser).toBe('username');
+    expect(result.database).toBe('new_database');
   });
 });
 
